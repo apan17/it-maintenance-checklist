@@ -1,16 +1,16 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Checklist;
 use App\Models\Maintenance;
-use App\Models\ChecklistAttachment;
+use App\Models\MaintenanceAttachment;
 use App\Models\MaintenanceStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
-class ChecklistController extends Controller
+
+class MaintenanceController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -18,7 +18,7 @@ class ChecklistController extends Controller
     public function index()
     {
         try {
-            return Checklist::queryable()->extendPaginate();
+            return Maintenance::queryable()->extendPaginate();
         } catch (\Throwable $th) {
             throw $th;
         }
@@ -33,7 +33,7 @@ class ChecklistController extends Controller
         try {
 
             DB::commit();
-            return $this->success('Checklist successfully created.');
+            return $this->success('Maintenance successfully created.');
         } catch (\Exception $th) {
             DB::rollBack();
             throw $th;
@@ -46,8 +46,8 @@ class ChecklistController extends Controller
     public function show(string $id)
     {
         try {
-            $checklist = Checklist::findOrFail($id);
-            return $this->success('Checklist retrieved successfully.', $checklist);
+            $maintenance = Maintenance::findOrFail($id);
+            return $this->success('Maintenance retrieved successfully.', $maintenance);
         } catch (\Throwable $th) {
             throw $th;
         }
@@ -61,43 +61,48 @@ class ChecklistController extends Controller
         DB::beginTransaction();
         try {
             $rules = [
-                'asset_id'      => 'required|exists:assets,id',
+                'maintenance_id' => 'required|exists:maintenance,id',
 
-                'attachments'   => 'nullable|array',
-                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx|max:2048',
+                'attachments'    => 'nullable|array',
+                'attachments.*'  => 'file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx|max:2048',
 
-                'asset_status'  => 'required|string',
-                'notes'         => 'nullable|string',
+                'asset_status'   => 'required|string',
+                'status'         => 'required|string',
+
+                'notes'          => 'nullable|string',
             ];
 
             $message = [
-                'asset_id.required'      => 'Asset is required.',
-                'asset_id.exists'        => 'Asset does not exist.',
-                'asset_status.required'  => 'Asset status is required.',
-                'asset_status.string'    => 'Asset status must be a string.',
+                'asset_id.required'     => 'Asset is required.',
+                'asset_id.exists'       => 'Asset does not exist.',
+                'asset_status.required' => 'Asset status is required.',
+                'asset_status.string'   => 'Asset status must be a string.',
 
-                'notes.string'           => 'Notes must be a string.',
+                'status.required'       => 'Status is required.',
+                'status.string'         => 'Status must be a string.',
 
-                'attachments.array'      => 'Attachments must be an array.',
-                'attachments.*.file'     => 'Each attachment must be a file.',
+                'notes.string'          => 'Notes must be a string.',
+
+                'attachments.array'     => 'Attachments must be an array.',
+                'attachments.*.file'    => 'Each attachment must be a file.',
             ];
 
             $validator = Validator::make($request->all(), $rules);
 
             abort_if($validator->fails(), 422, $validator->errors()->first());
 
-            $inspector = auth()->user();
-            $checklist = Checklist::findOrFail($id);
+            $maintainer  = auth()->user();
+            $maintenance = Maintenance::findOrFail($id);
 
-            $checklist->update([
-                'asset_id'             => $request->asset_id,
-                'inspector_id'         => $inspector->id,
-                'current_asset_status' => $request->asset_status,
-                'complete_date'        => \Carbon\Carbon::now(),
-                'notes'                => $request->notes,
+            $maintenance->update([
+                'asset_id'       => $request->asset_id,
+                'maintainer_id'  => $maintainer->id,
+                'asset_status'   => $request->asset_status,
+                'current_status' => $request->status,
+                'notes'          => $request->notes,
             ]);
 
-            $checklist->asset->update([
+            $maintenance->asset->update([
                 'status' => $request->asset_status,
             ]);
 
@@ -109,13 +114,13 @@ class ChecklistController extends Controller
 
                     $timestamp = now()->timestamp; // Current timestamp
 
-                    Storage::disk("public")->makeDirectory('attachment/checklist');
+                    Storage::disk("public")->makeDirectory('attachment/maintenance');
 
                     if (! $file->isValid()) {
                         throw new \Exception("Invalid file upload.");
                     }
 
-                    $path = Storage::disk('public')->putFileAs('attachment/checklist', $file, "{$timestamp}.{$extension}");
+                    $path = Storage::disk('public')->putFileAs('attachment/maintenance', $file, "{$timestamp}.{$extension}");
 
                     // Debug jika gagal
                     if (! $path) {
@@ -132,38 +137,35 @@ class ChecklistController extends Controller
                     $attachment = Attachment::create([
                         'name'        => $fileName,
                         'path'        => $path, // Use the correct file path for S3
-                        'module'      => 'CHECKLIST',
+                        'module'      => 'MAINTENANCE',
                         'description' => $request->description,
                         'extension'   => $extension,
                         'mime'        => $mimeType,
                         'filesize'    => $fileSize,
                     ]);
 
-                    ChecklistAttachment::create([
-                        'checklist_id' => $checklist->id,
+                    MaintenanceAttachment::create([
+                        'maintenance_id' => $maintenance->id,
                         'attachment_id'  => $attachment->id,
                     ]);
                 }
             }
 
-            if ($request->asset_status == 'Abnormal') {
-                $maintenance = Maintenance::create([
-                    'asset_id'       => $request->asset_id,
-                    'reporter_id'    => $inspector->id,
-                    'asset_status'   => $request->asset_status,
-                    'current_status' => 'Pending',
-                ]);
+            MaintenanceStatus::create([
+                'maintenance_id' => $maintenance->id,
+                'status'         => $request->status,
+                'notes'         => $request->notes,
+                'is_current'     => true,
+                'date'           => now(),
+            ]);
 
-                MaintenanceStatus::create([
-                    'maintenance_id' => $maintenance->id,
-                    'status'         => 'Pending',
-                    'is_current'     => true,
-                    'date'           => now(),
-                ]);
+            if ($request->status == 'Completed') {
+                $maintenance->complete_date = now();
+                $maintenance->save();
             }
 
             DB::commit();
-            return $this->success('Checklist successfully updated.');
+            return $this->success('Maintenance successfully updated.');
         } catch (\Exception $th) {
             DB::rollBack();
             throw $th;
@@ -177,11 +179,11 @@ class ChecklistController extends Controller
     {
         DB::beginTransaction();
         try {
-            $checklist = Checklist::findOrFail($id);
-            $checklist->delete();
+            $maintenance = Maintenance::findOrFail($id);
+            $maintenance->delete();
 
             DB::commit();
-            return $this->success('Checklist successfully deleted.');
+            return $this->success('Maintenance successfully deleted.');
         } catch (\Throwable $th) {
             DB::rollBack();
             throw $th;

@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
+use App\Models\Role;
+use App\Models\Permission;
 
 class RoleSeeder extends Seeder
 {
@@ -114,9 +115,9 @@ class RoleSeeder extends Seeder
                 list($module, $permissionName) = explode(':', $permission);
                 $permissionModel = Permission::firstOrCreate([
                     'name' => $permission,
-                    'module' => Str::of($module)->title(),
-                    'label' => Str::of($permissionName)->title(),
-                    'guard_name' => "api",
+                    'module' => Str::of($module)->absoluteTitle(),
+                    'label' => Str::of($permissionName)->absoluteTitle(),
+                    'guard_name' => "api"
                 ]);
                 $perananModel->givePermissionTo($permissionModel);
             });

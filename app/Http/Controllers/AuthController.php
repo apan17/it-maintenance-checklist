@@ -94,4 +94,15 @@ class AuthController extends Controller
             throw $th;
         }
     }
+
+    public function getRole(){
+        try {
+            $roles = Role::whereNotIn('name', ['masteradmin'])
+                ->orderBy('name')
+                ->get(['id', 'label']);
+            return $this->success('Senarai peranan berjaya diperoleh.', $roles);
+        } catch (\Exception $th) {
+            throw $th;
+        }
+    }
 }
