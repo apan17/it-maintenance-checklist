@@ -30,8 +30,8 @@ class AssetController extends Controller
         DB::beginTransaction();
         try {
             $rules = [
-                'component_id' => 'required|exists:components,id',
-                'serial_no' => 'required|string|max:255|unique:assets,serial_no',
+                'component_id' => 'required|exists:ref_components,id',
+                'serial_number' => 'required|string|max:255|unique:assets,serial_number',
                 'name' => 'required|string',
                 'location' => 'required|string',
                 'status' => 'required|string',
@@ -41,10 +41,10 @@ class AssetController extends Controller
             $message = [
                 'component_id.required' => 'Component is required.',
                 'component_id.exists' => 'Component does not exist.',
-                'serial_no.required' => 'Serial number is required.',
-                'serial_no.string' => 'Serial number must be a string.',
-                'serial_no.max' => 'Serial number must not exceed 255 characters.',
-                'serial_no.unique' => 'Serial number must be unique.',
+                'serial_number.required' => 'Serial number is required.',
+                'serial_number.string' => 'Serial number must be a string.',
+                'serial_number.max' => 'Serial number must not exceed 255 characters.',
+                'serial_number.unique' => 'Serial number must be unique.',
                 'name.required' => 'Name is required.',
                 'name.string' => 'Name must be a string.',
                 'location.required' => 'Location is required.',
@@ -60,7 +60,7 @@ class AssetController extends Controller
 
             $asset = Asset::create([
                 'component_id' => $request->component_id,
-                'serial_no' => $request->serial_no,
+                'serial_number' => $request->serial_number,
                 'name' => $request->name,
                 'location' => $request->location,
                 'status' => $request->status,
@@ -96,8 +96,8 @@ class AssetController extends Controller
         DB::beginTransaction();
         try {
             $rules = [
-                'component_id' => 'required|exists:components,id',
-                'serial_no' => 'required|string|max:255|unique:assets,serial_no,' . $id,
+                'component_id' => 'required|exists:ref_components,id',
+                'serial_number' => 'required|string|max:255|unique:assets,serial_number,' . $id,
                 'name' => 'required|string',
                 'location' => 'required|string',
                 'status' => 'required|string',
@@ -107,10 +107,10 @@ class AssetController extends Controller
             $message = [
                 'component_id.required' => 'Component is required.',
                 'component_id.exists' => 'Component does not exist.',
-                'serial_no.required' => 'Serial number is required.',
-                'serial_no.string' => 'Serial number must be a string.',
-                'serial_no.max' => 'Serial number must not exceed 255 characters.',
-                'serial_no.unique' => 'Serial number must be unique.',
+                'serial_number.required' => 'Serial number is required.',
+                'serial_number.string' => 'Serial number must be a string.',
+                'serial_number.max' => 'Serial number must not exceed 255 characters.',
+                'serial_number.unique' => 'Serial number must be unique.',
                 'name.required' => 'Name is required.',
                 'name.string' => 'Name must be a string.',
                 'location.required' => 'Location is required.',
@@ -128,7 +128,7 @@ class AssetController extends Controller
 
             $asset->update([
                 'component_id' => $request->component_id,
-                'serial_no' => $request->serial_no,
+                'serial_number' => $request->serial_number,
                 'name' => $request->name,
                 'location' => $request->location,
                 'status' => $request->status,

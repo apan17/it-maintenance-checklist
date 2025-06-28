@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
-class MaintenanceAttachmentController extends Controller
+class ChecklistAttachmentController extends Controller
 {
     /**
      * Display a listing of the resource.

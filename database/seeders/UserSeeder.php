@@ -33,5 +33,16 @@ class UserSeeder extends Seeder
             'fullname' => 'Arfan',
             'contact_no' => '01111920398',
         ]);
+
+        User::create([
+            'staff_no' => '00003',
+            'email' => 'staff@gmail.com',
+            'password' => bcrypt('password'),
+        ])->assignRole('staff')
+            ->profile()->create([
+            'username' => 'Staff',
+            'fullname' => 'Staff',
+            'contact_no' => '0198765432',
+        ]);
     }
 }

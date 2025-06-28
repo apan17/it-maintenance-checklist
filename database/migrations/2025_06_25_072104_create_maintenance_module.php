@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('asset_id')->constrained('assets');
             $table->foreignUuid('reporter_id')->constrained('users');
-            $table->foreignUuid('maintainer_id')->constrained('users')->nullable();
+            $table->foreignUuid('maintainer_id')->nullable()->constrained('users');
 
             $table->string('asset_status')->comment('Status Aset');
             $table->string('current_status')->comment('Status Penyelenggaraan Terkini');
@@ -36,6 +36,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('maintenance_id')->constrained('maintenances')->onDelete('cascade');
 
+            $table->string('asset_status')->comment('Status Aset');
             $table->string('status')->comment('Status Penyelenggaraan');
             $table->string('notes')->nullable()->comment('Keterangan Status Penyelenggaraan');
             $table->dateTime('date')->comment('Tarikh Status Penyelenggaraan');

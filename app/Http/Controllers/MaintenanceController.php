@@ -1,14 +1,14 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Attachment;
 use App\Models\Maintenance;
 use App\Models\MaintenanceAttachment;
 use App\Models\MaintenanceStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Validator;
 
 class MaintenanceController extends Controller
 {
@@ -61,20 +61,16 @@ class MaintenanceController extends Controller
         DB::beginTransaction();
         try {
             $rules = [
-                'maintenance_id' => 'required|exists:maintenance,id',
+                'attachments'   => 'nullable|array',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx|max:2048',
 
-                'attachments'    => 'nullable|array',
-                'attachments.*'  => 'file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx|max:2048',
+                'asset_status'  => 'required|string',
+                'status'        => 'required|string',
 
-                'asset_status'   => 'required|string',
-                'status'         => 'required|string',
-
-                'notes'          => 'nullable|string',
+                'notes'         => 'nullable|string',
             ];
 
             $message = [
-                'asset_id.required'     => 'Asset is required.',
-                'asset_id.exists'       => 'Asset does not exist.',
                 'asset_status.required' => 'Asset status is required.',
                 'asset_status.string'   => 'Asset status must be a string.',
 
@@ -95,7 +91,6 @@ class MaintenanceController extends Controller
             $maintenance = Maintenance::findOrFail($id);
 
             $maintenance->update([
-                'asset_id'       => $request->asset_id,
                 'maintainer_id'  => $maintainer->id,
                 'asset_status'   => $request->asset_status,
                 'current_status' => $request->status,
@@ -151,15 +146,18 @@ class MaintenanceController extends Controller
                 }
             }
 
+            $maintenance->maintenanceStatuses()->where('is_current', true)->update(['is_current' => false]);
+
             MaintenanceStatus::create([
                 'maintenance_id' => $maintenance->id,
+                'asset_status'   => $request->asset_status,
                 'status'         => $request->status,
-                'notes'         => $request->notes,
+                'notes'          => $request->notes,
                 'is_current'     => true,
                 'date'           => now(),
             ]);
 
-            if ($request->status == 'Completed') {
+            if ($request->status == 'COMPLETED') {
                 $maintenance->complete_date = now();
                 $maintenance->save();
             }

@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ref_maintenance_frequency', function (Blueprint $table) {
+        Schema::create('ref_maintenance_frequencies', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->unique()->comment('Nama Kekerapan Penyelenggaraan');
+            $table->string('description')->nullable();
+            $table->integer('order');
             $table->timestamps();
         });
 
@@ -21,6 +23,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name')->unique()->comment('Nama Jenis Komponen');
             $table->string('maintenance_frequency')->comment('Kekerapan Penyelenggaraan');
+            $table->integer('order');
             $table->timestamps();
         });
     }

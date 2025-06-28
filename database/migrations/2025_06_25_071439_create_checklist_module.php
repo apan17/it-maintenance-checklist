@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('checklists', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('asset_id')->constrained('assets');
-            $table->foreignUuid('inspector_id')->constrained('users')->nullable();
+            $table->foreignUuid('inspector_id')->nullable()->constrained('users');
             
             $table->string('asset_status')->comment('Status Aset');
             $table->string('current_asset_status')->nullable()->comment('Status Aset Semasa');

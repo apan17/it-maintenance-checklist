@@ -53,7 +53,6 @@ class AuthController extends Controller
                 'password' => 'required|min:8|confirmed',
                 'username' => 'required|string|max:255',
                 'fullname' => 'required|string|max:255',
-                'contact_no' => 'required|string|max:255',
             ];
 
             $message = [
@@ -69,7 +68,6 @@ class AuthController extends Controller
                 'password.confirmed' => 'Kata laluan tidak sepadan.',
                 'username.required' => 'Nama akaun diperlukan.',
                 'fullname.required' => 'Nama penuh diperlukan.',
-                'contact_no.required' => 'No. telefon diperlukan.',
             ];
 
             $validator = Validator::make($request->all(), $rules);

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Attachment;
 use App\Models\Checklist;
 use App\Models\Maintenance;
 use App\Models\ChecklistAttachment;
@@ -61,8 +62,6 @@ class ChecklistController extends Controller
         DB::beginTransaction();
         try {
             $rules = [
-                'asset_id'      => 'required|exists:assets,id',
-
                 'attachments'   => 'nullable|array',
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx,xls,xlsx|max:2048',
 
@@ -71,8 +70,6 @@ class ChecklistController extends Controller
             ];
 
             $message = [
-                'asset_id.required'      => 'Asset is required.',
-                'asset_id.exists'        => 'Asset does not exist.',
                 'asset_status.required'  => 'Asset status is required.',
                 'asset_status.string'    => 'Asset status must be a string.',
 
@@ -90,7 +87,6 @@ class ChecklistController extends Controller
             $checklist = Checklist::findOrFail($id);
 
             $checklist->update([
-                'asset_id'             => $request->asset_id,
                 'inspector_id'         => $inspector->id,
                 'current_asset_status' => $request->asset_status,
                 'complete_date'        => \Carbon\Carbon::now(),
@@ -102,6 +98,7 @@ class ChecklistController extends Controller
             ]);
 
             if ($request->hasFile('attachments')) {
+                $attachments = $request->file('attachments');
                 foreach ($attachments as $file) {
                     // $fileName = $file->getClientOriginalName();
                     $fileName  = urldecode($file->getClientOriginalName());
@@ -146,17 +143,18 @@ class ChecklistController extends Controller
                 }
             }
 
-            if ($request->asset_status == 'Abnormal') {
+            if ($request->asset_status == 'ABNORMAL') {
                 $maintenance = Maintenance::create([
-                    'asset_id'       => $request->asset_id,
+                    'asset_id'       => $checklist->asset_id,
                     'reporter_id'    => $inspector->id,
                     'asset_status'   => $request->asset_status,
-                    'current_status' => 'Pending',
+                    'current_status' => 'PENDING',
                 ]);
 
                 MaintenanceStatus::create([
                     'maintenance_id' => $maintenance->id,
-                    'status'         => 'Pending',
+                    'status'         => 'PENDING',
+                    'asset_status'   => $request->asset_status,
                     'is_current'     => true,
                     'date'           => now(),
                 ]);

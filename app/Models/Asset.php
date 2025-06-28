@@ -18,7 +18,7 @@ class Asset extends Model
      */
     protected $fillable = [
         'component_id',
-        'serial_no',
+        'serial_number',
         'name',
         'location',
         'status',
@@ -38,7 +38,7 @@ class Asset extends Model
     // ! RELATIONSHIPS
     public function component()
     {
-        return $this->belongsTo(Component::class, 'component_id');
+        return $this->belongsTo(RefComponent::class, 'component_id');
     }
 
     public function checklists()

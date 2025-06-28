@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('assets', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('component_id')->constrained('ref_components')->onDelete('cascade');
-            $table->string('serial_no')->unique()->comment('Nombor Siri Aset');
+            $table->string('serial_number')->unique()->comment('Nombor Siri Aset');
             $table->string('name')->comment('Nama Aset');
             $table->string('location')->comment('Lokasi Aset');
             $table->string('status')->comment('Status Aset');
@@ -22,6 +22,7 @@ return new class extends Migration
 
             $table->string('ip_address')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

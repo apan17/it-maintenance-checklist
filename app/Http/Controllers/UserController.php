@@ -30,45 +30,35 @@ class UserController extends Controller
         try {
             $rules = [
                 'email' => 'required|email|unique:users,email',
-                'password' => 'required|min:8',
                 'username' => 'required|string|max:255',
                 'fullname' => 'required|string|max:255',
-                'contact_no' => 'required|string|max:255',
             ];
 
             $message = [
                 'email.required' => 'E-mel diperlukan.',
                 'email.email' => 'E-mel tidak sah.',
                 'email.unique' => 'E-mel telah didaftarkan.',
-                'password.required' => 'Kata laluan diperlukan.',
-                'password.min' => 'Kata laluan mesti sekurang-kurangnya 8 aksara.',
                 'username.required' => 'Nama akaun diperlukan.',
                 'fullname.required' => 'Nama penuh diperlukan.',
-                'contact_no.required' => 'No. telefon diperlukan.',
             ];
 
             $validator = Validator::make($request->all(), $rules);
 
             abort_if($validator->fails(), 422, $validator->errors()->first());
 
-            // get the last staff_no
-            $lastUser = User::orderBy('staff_no', 'desc')->first();
-
-            $latestStaffNo = $lastUser?->staff_no ? str_pad((int) $lastUser?->staff_no + 1, 5, '0', STR_PAD_LEFT) : '00001';
-
             $user = User::create([
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'staff_no' => $latestStaffNo,
+                'password' => Hash::make('password'),
+                'staff_no' => $request->staff_no,
             ])->assignRole('staff')
                 ->profile()->create([
                 'username' => $request->username,
                 'fullname' => $request->fullname,
-                'contact_no' => $request->contact_no,
+                'contact_no' => $request->contact_no ?? null,
             ]);
 
             DB::commit();
-            return $this->success('Pengguna berjaya didaftarkan.');
+            return $this->success('User successfully created.');
         } catch (\Exception $th) {
             DB::rollBack();
             throw $th;
@@ -79,15 +69,56 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            $user = User::findOrFail($id);
+            return $this->success('User successfully retrieved.', $user);
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(User $user, Request $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $rules = [
+                'password' => 'nullable|min:8|confirmed',
+                'username' => 'required|string|max:255',
+                'fullname' => 'required|string|max:255',
+            ];
+
+            $message = [
+                'password.min' => 'Kata laluan mesti sekurang-kurangnya 8 aksara.',
+                'password.confirmed' => 'Kata laluan tidak sepadan.',
+                'username.required' => 'Nama akaun diperlukan.',
+                'fullname.required' => 'Nama penuh diperlukan.',
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            abort_if($validator->fails(), 422, $validator->errors()->first());
+
+            if($request->password) {
+                $user->update([
+                    'password' => Hash::make($request->password),
+                ]);
+            }
+
+            $user->profile()->update([
+                'username' => $request->username,
+                'fullname' => $request->fullname,
+                'contact_no' => $request->contact_no ?? null,
+            ]);
+
+            DB::commit();
+            return $this->success('User successfully updated.');
+        } catch (\Exception $th) {
+            DB::rollBack();
+            throw $th;
+        }
     }
 
     /**
@@ -103,7 +134,7 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
             $user = User::findOrFail($id);
-            $user->update(['is_active' => request()->is_active]);
+            $user->update(['is_active' => $request->is_active]);
             DB::commit();
             return $this->success('Pengguna berjaya dinyahaktifkan.');
         } catch (\Throwable $th) {
